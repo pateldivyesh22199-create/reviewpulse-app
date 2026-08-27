@@ -1,8 +1,11 @@
 ﻿"use client";
 
 import { useState } from "react";
+import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
 
 export default function Home() {
+  const { isSignedIn } = useUser();
+
   // 1. Live Generator State
   const [reviewText, setReviewText] = useState("The food was absolutely delicious and the service was top-notch! Will definitely visit again.");
   const [businessType, setBusinessType] = useState("Cafe & Restaurant");
@@ -121,7 +124,7 @@ export default function Home() {
         <a href="#pricing" className="underline font-bold ml-1 hover:text-blue-200">View Plans →</a>
       </div>
 
-      {/* 2. Glassmorphism Navigation */}
+      {/* 2. Glassmorphism Navigation with Clerk Auth Integrations */}
       <header className="border-b border-slate-800/60 bg-[#070a11]/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
           <div className="flex items-center gap-3">
@@ -141,13 +144,32 @@ export default function Home() {
             <a href="#faq" className="hover:text-blue-400 transition">FAQ</a>
           </nav>
 
+          {/* Clerk Auth Integration Buttons */}
           <div className="flex items-center gap-3">
-            <a
-              href="#demo"
-              className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition shadow-md shadow-blue-600/30 border border-blue-400/30 font-mono"
-            >
-              Test Live AI ⚡
-            </a>
+            {!isSignedIn ? (
+              <>
+                <SignInButton mode="modal">
+                  <button className="text-xs font-mono text-slate-300 hover:text-white px-3 py-2 transition">
+                    Sign In
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition shadow-md shadow-blue-600/30 border border-blue-400/30 font-mono">
+                    Get Started
+                  </button>
+                </SignUpButton>
+              </>
+            ) : (
+              <>
+                <a
+                  href="#demo"
+                  className="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 text-xs font-semibold px-4 py-2 rounded-lg transition border border-blue-500/30 font-mono"
+                >
+                  Test Live AI ⚡
+                </a>
+                <UserButton afterSignOutUrl="/" />
+              </>
+            )}
           </div>
         </div>
       </header>

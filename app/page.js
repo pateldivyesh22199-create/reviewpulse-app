@@ -2,9 +2,50 @@
 
 import { useState } from "react";
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const { isSignedIn } = useUser();
+  const router = useRouter();
+
+  // Stripe Checkout Handler
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
+  const handleCheckout = async (priceId: string | undefined) => {
+    if (!priceId) {
+      alert("Price ID configuration error!");
+      return;
+    }
+
+    if (!isSignedIn) {
+      // User is not signed in, prompt to sign in
+      alert("Please sign in to subscribe to a plan.");
+      return;
+    }
+
+    setCheckoutLoading(priceId);
+
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ priceId }),
+      });
+
+      const data = await res.json();
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || "Failed to initiate checkout session.");
+      }
+    } catch (err) {
+      alert("Something went wrong during checkout.");
+      console.error(err);
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
 
   // 1. Live Generator State
   const [reviewText, setReviewText] = useState("The food was absolutely delicious and the service was top-notch! Will definitely visit again.");
@@ -45,12 +86,12 @@ export default function Home() {
       }
     } catch (err) {
       alert("Error generating response.");
-    } finally {
+    } fontally {
       setLoading(false);
     }
   };
 
-  const setPresetReview = (star) => {
+  const setPresetReview = (star: number) => {
     setDemoStar(star);
     if (star === 5) {
       setReviewText("The food was absolutely delicious and the service was top-notch! Will definitely visit again.");
@@ -486,8 +527,12 @@ export default function Home() {
                 <li>✓ Standard Email Support</li>
               </ul>
             </div>
-            <button className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 rounded-lg text-xs transition">
-              Start Free Trial
+            <button
+              onClick={() => handleCheckout(process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER)}
+              disabled={checkoutLoading === process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER}
+              className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 rounded-lg text-xs transition disabled:opacity-50"
+            >
+              {checkoutLoading === process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER ? "Loading..." : "Start Free Trial"}
             </button>
           </div>
 
@@ -510,8 +555,12 @@ export default function Home() {
                 <li>✓ Instant WhatsApp Alerts</li>
               </ul>
             </div>
-            <button className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-lg text-xs transition shadow-lg shadow-blue-600/30">
-              Start Free Trial
+            <button
+              onClick={() => handleCheckout(process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO)}
+              disabled={checkoutLoading === process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO}
+              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-lg text-xs transition shadow-lg shadow-blue-600/30 disabled:opacity-50"
+            >
+              {checkoutLoading === process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO ? "Loading..." : "Start Free Trial"}
             </button>
           </div>
 
@@ -531,8 +580,12 @@ export default function Home() {
                 <li>✓ White-label PDF Reports</li>
               </ul>
             </div>
-            <button className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 rounded-lg text-xs transition">
-              Contact Sales
+            <button
+              onClick={() => handleCheckout(process.env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY)}
+              disabled={checkoutLoading === process.env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY}
+              className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 rounded-lg text-xs transition disabled:opacity-50"
+            >
+              {checkoutLoading === process.env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY ? "Loading..." : "Contact Sales"}
             </button>
           </div>
         </div>

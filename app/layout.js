@@ -1,5 +1,6 @@
 import './globals.css';
 import { ClerkProvider } from '@clerk/nextjs';
+import Link from 'next/link';
 
 export const metadata = {
   title: 'ReviewPulse AI',
@@ -10,15 +11,17 @@ export default function RootLayout({ children }) {
   return (
     <ClerkProvider>
       <html lang="en">
-        <body>
-          {children}
+        <body className="bg-gray-950 text-gray-100 flex flex-col min-h-screen">
+          <div className="flex-grow">
+            {children}
+          </div>
 
-          {/* Footer Legal Links */}
-          <footer className="w-full border-t border-gray-200 py-6 text-center text-sm text-gray-500">
+          {/* Dark Styled Footer Legal Links */}
+          <footer className="w-full border-t border-gray-800 bg-gray-950 py-6 text-center text-sm text-gray-400">
             <div className="flex justify-center gap-6">
-              <a href="/privacy" className="hover:underline hover:text-gray-800">Privacy Policy</a>
+              <Link href="/privacy" className="hover:text-indigo-400 transition-colors">Privacy Policy</Link>
               <span>•</span>
-              <a href="/terms" className="hover:underline hover:text-gray-800">Terms of Service</a>
+              <Link href="/terms" className="hover:text-indigo-400 transition-colors">Terms of Service</Link>
             </div>
           </footer>
 

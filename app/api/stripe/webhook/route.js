@@ -30,13 +30,28 @@ export async function POST(req) {
     const customerId = session.customer;
     const subscriptionId = session.subscription;
 
-    // Supabase ડેટાબેઝમાં યુઝરને Pro પ્લાન આપી દો
+    // Stripe Session માંથી લાઈન આઈટમ્સ મેળવવી જેથી Price ID મળે
+    const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+    const priceId = lineItems.data[0]?.price?.id;
+
+    let userPlan = "starter"; // Default
+
+    // Price ID પ્રમાણે સાચો પ્લાન નક્કી કરવો
+    if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER) {
+      userPlan = "starter";
+    } else if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO) {
+      userPlan = "pro";
+    } else if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY) {
+      userPlan = "enterprise";
+    }
+
+    // ડાયનેમિક રીતે સાચો પ્લાન Supabase માં અપડેટ કરવો
     const { error } = await supabase.from("users").upsert(
       {
         email: customerEmail,
         stripe_customer_id: customerId,
         subscription_id: subscriptionId,
-        plan: "pro",
+        plan: userPlan,
         status: "active",
         updated_at: new Date().toISOString(),
       },
@@ -46,7 +61,7 @@ export async function POST(req) {
     if (error) {
       console.error("Supabase error:", error);
     } else {
-      console.log(`🎉 Success! Pro plan activated for: ${customerEmail}`);
+      console.log(`🎉 Success! ${userPlan} plan activated for: ${customerEmail}`);
     }
   }
 

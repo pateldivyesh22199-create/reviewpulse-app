@@ -17,14 +17,10 @@ export async function POST(req) {
     return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
   }
 
-  // પેમેન્ટ સફળ થાય એટલે આ બ્લોક ચાલશે
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
     const customerEmail = session.customer_details?.email;
-
-    console.log(`🎉 Success! Payment received from: ${customerEmail}`);
-
-    // અહીં ભવિષ્યમાં ડેટાબેઝ અપડેટ અને ઓનબોર્ડિંગ મેઈલ મોકલવાનો કોડ આવશે
+    console.log(`?? Success! Payment received from: ${customerEmail}`);
   }
 
   return NextResponse.json({ received: true }, { status: 200 });

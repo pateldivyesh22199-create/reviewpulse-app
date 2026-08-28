@@ -443,11 +443,19 @@ export default function Home() {
                 <span className="text-4xl font-extrabold">$29</span>
                 <span className="text-slate-400 text-xs">/mo</span>
               </div>
+
+              {/* Plan Features */}
+              <ul className="text-xs text-slate-300 space-y-3 mb-8 border-t border-slate-800 pt-5">
+                <li className="flex items-center gap-2">✓ 1 Business Location</li>
+                <li className="flex items-center gap-2">✓ Up to 200 AI Responses/mo</li>
+                <li className="flex items-center gap-2">✓ Google & Yelp Integration</li>
+                <li className="flex items-center gap-2">✓ Standard Support</li>
+              </ul>
             </div>
             <button
               onClick={() => handleCheckout(process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER)}
               disabled={checkoutLoading === process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER}
-              className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 rounded-lg text-xs transition"
+              className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 rounded-lg text-xs transition font-mono"
             >
               {checkoutLoading === process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER ? "Loading..." : "Start Free Trial"}
             </button>
@@ -465,11 +473,20 @@ export default function Home() {
                 <span className="text-4xl font-extrabold">$79</span>
                 <span className="text-slate-400 text-xs">/mo</span>
               </div>
+
+              {/* Plan Features */}
+              <ul className="text-xs text-slate-200 space-y-3 mb-8 border-t border-slate-800 pt-5">
+                <li className="flex items-center gap-2">✓ Up to 5 Business Locations</li>
+                <li className="flex items-center gap-2">✓ Unlimited AI Responses</li>
+                <li className="flex items-center gap-2">✓ All Platforms (Google, Yelp, Trustpilot)</li>
+                <li className="flex items-center gap-2">✓ Smart Sentiment & Crisis Alerts</li>
+                <li className="flex items-center gap-2">✓ Priority Email & Chat Support</li>
+              </ul>
             </div>
             <button
               onClick={() => handleCheckout(process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO)}
               disabled={checkoutLoading === process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO}
-              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-lg text-xs transition"
+              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-lg text-xs transition font-mono"
             >
               {checkoutLoading === process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO ? "Loading..." : "Start Free Trial"}
             </button>
@@ -484,11 +501,20 @@ export default function Home() {
                 <span className="text-4xl font-extrabold">$199</span>
                 <span className="text-slate-400 text-xs">/mo</span>
               </div>
+
+              {/* Plan Features */}
+              <ul className="text-xs text-slate-300 space-y-3 mb-8 border-t border-slate-800 pt-5">
+                <li className="flex items-center gap-2">✓ Unlimited Business Locations</li>
+                <li className="flex items-center gap-2">✓ Unlimited AI Responses</li>
+                <li className="flex items-center gap-2">✓ Custom Branding & White-labeling</li>
+                <li className="flex items-center gap-2">✓ Dedicated Account Manager</li>
+                <li className="flex items-center gap-2">✓ 24/7 VIP Support & API Access</li>
+              </ul>
             </div>
             <button
               onClick={() => handleCheckout(process.env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY)}
               disabled={checkoutLoading === process.env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY}
-              className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 rounded-lg text-xs transition"
+              className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 rounded-lg text-xs transition font-mono"
             >
               {checkoutLoading === process.env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY ? "Loading..." : "Contact Sales"}
             </button>

@@ -20,11 +20,12 @@ export async function POST(req) {
     const body = await req.json();
     const { reviewText, rating, reviewerName } = body;
 
-    if (!reviewText || !rating) {
+    // ૧. ડેટા બરાબર છે કે નહીં તેનો કડક ચેક
+    if (!reviewText || String(reviewText).trim() === "" || rating === undefined || rating === null) {
       return NextResponse.json({ error: "Review text and rating are required." }, { status: 400 });
     }
 
-    // 1. Check User Credits & Plan Limits
+    // ૨. Check User Credits & Plan Limits
     let { data: user } = await supabase
       .from("users")
       .select("*")
@@ -34,26 +35,28 @@ export async function POST(req) {
     if (!user) {
       const { data: newUser } = await supabase
         .from("users")
-        .insert({ user_id: userId, email: "user@example.com" })
+        .insert({ user_id: userId, email: "user@example.com", credits_used: 0 })
         .select()
         .single();
       user = newUser;
     }
 
-    const creditLimit = user.plan === "pro" || user.plan === "agency" ? 999999 : 200;
-    if (user.credits_used >= creditLimit) {
+    const currentCredits = user?.credits_used || 0;
+    const creditLimit = user?.plan === "pro" || user?.plan === "agency" ? 999999 : 200;
+
+    if (currentCredits >= creditLimit) {
       return NextResponse.json(
         { error: "Credit limit reached. Please upgrade your plan." },
         { status: 403 }
       );
     }
 
-    // 2. Fetch Business Context
+    // ૩. Fetch Business Context
     const { data: business } = await supabase
       .from("businesses")
       .select("*")
       .eq("user_id", userId)
-      .single();
+      .maybeSingle();
 
     const businessName = business?.name || "Our Business";
     const category = business?.category || "General Service";
@@ -62,7 +65,7 @@ export async function POST(req) {
     const aiTone = business?.ai_tone || "Professional & Formal";
     const customInstructions = business?.custom_instructions || "";
 
-    // 3. Build AI Prompt
+    // ૪. Build AI Prompt
     const prompt = `
 You are an expert customer service representative for "${businessName}" (Category: ${category}).
 Business Details: ${description}
@@ -83,18 +86,19 @@ Tone & Persona Instructions:
 - Keep the reply concise, professional, and human-like (under 120 words). Do not use placeholders.
 `;
 
-    // 4. Generate Response using Gemini AI
-    const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
+    // ૫. Generate Response using Gemini AI (Correct Model Name Fixed)
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent(prompt);
     const aiResponseText = result.response.text();
 
-    // 5. Update Credits in Supabase
+    // ૬. Update Credits in Supabase
+    const updatedCredits = currentCredits + 1;
     await supabase
       .from("users")
-      .update({ credits_used: user.credits_used + 1 })
+      .update({ credits_used: updatedCredits })
       .eq("user_id", userId);
 
-    // 6. Save Review History in Supabase
+    // ૭. Save Review History in Supabase
     if (business) {
       await supabase.from("reviews").insert({
         business_id: business.id,
@@ -109,10 +113,10 @@ Tone & Persona Instructions:
     return NextResponse.json({
       success: true,
       aiResponse: aiResponseText,
-      creditsUsed: user.credits_used + 1,
+      creditsUsed: updatedCredits,
     });
   } catch (error) {
     console.error("AI Generation Error:", error);
-    return NextResponse.json({ error: "Failed to generate reply." }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Failed to generate reply." }, { status: 500 });
   }
 }

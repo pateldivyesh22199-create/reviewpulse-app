@@ -99,7 +99,7 @@ Tone & Persona Instructions:
 `;
 
     // 6. Gemini AI Call
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
     const result = await model.generateContent(prompt);
     const aiResponseText = result.response.text();
 

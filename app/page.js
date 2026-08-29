@@ -368,6 +368,34 @@ export default function Home() {
             />
           </div>
 
+          {/* Added Contact Info Option */}
+          <div className="mb-4 bg-slate-950/60 p-4 border border-slate-800/80 rounded-xl space-y-3">
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="includeContact"
+                checked={includeContact}
+                onChange={(e) => setIncludeContact(e.target.checked)}
+                className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
+              />
+              <label htmlFor="includeContact" className="text-xs font-mono text-slate-300 cursor-pointer select-none">
+                Include Contact / Resolution Info in Reply
+              </label>
+            </div>
+
+            {includeContact && (
+              <div>
+                <input
+                  type="text"
+                  placeholder="e.g. support@yourbrand.com or +1 800-123-4567"
+                  value={contactInfo}
+                  onChange={(e) => setContactInfo(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-slate-200 text-xs focus:outline-none"
+                />
+              </div>
+            )}
+          </div>
+
           <button
             onClick={handleGenerate}
             disabled={loading}

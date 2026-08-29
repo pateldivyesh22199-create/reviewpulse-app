@@ -6,12 +6,19 @@ import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
 export default function Home() {
   const { isSignedIn } = useUser();
 
+  // Stripe Price IDs (Fallback safe mapping)
+  const STRIPE_PRICES = {
+    starter: process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER || "",
+    pro: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO || "",
+    agency: process.env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY || "",
+  };
+
   // Stripe Checkout Handler
   const [checkoutLoading, setCheckoutLoading] = useState(null);
 
-  const handleCheckout = async (priceId) => {
+  const handleCheckout = async (priceId, planKey) => {
     if (!priceId) {
-      alert("Price ID configuration error!");
+      alert("Price ID missing! Please check your environment variables.");
       return;
     }
 
@@ -20,7 +27,7 @@ export default function Home() {
       return;
     }
 
-    setCheckoutLoading(priceId);
+    setCheckoutLoading(planKey);
 
     try {
       const res = await fetch("/api/stripe/checkout", {
@@ -109,6 +116,7 @@ export default function Home() {
   };
 
   const copyToClipboard = () => {
+    if (!response) return;
     navigator.clipboard.writeText(response);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -363,7 +371,7 @@ export default function Home() {
           <button
             onClick={handleGenerate}
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3.5 rounded-lg transition text-sm font-mono"
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3.5 rounded-lg transition text-sm font-mono disabled:opacity-50"
           >
             {loading ? "Generating Output..." : "Generate AI Response ⚡"}
           </button>
@@ -444,7 +452,6 @@ export default function Home() {
                 <span className="text-slate-400 text-xs">/mo</span>
               </div>
 
-              {/* Plan Features */}
               <ul className="text-xs text-slate-300 space-y-3 mb-8 border-t border-slate-800 pt-5">
                 <li className="flex items-center gap-2">✓ 1 Business Location</li>
                 <li className="flex items-center gap-2">✓ Up to 200 AI Responses/mo</li>
@@ -453,11 +460,11 @@ export default function Home() {
               </ul>
             </div>
             <button
-              onClick={() => handleCheckout(process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER)}
-              disabled={checkoutLoading === process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER}
-              className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 rounded-lg text-xs transition font-mono"
+              onClick={() => handleCheckout(STRIPE_PRICES.starter, "starter")}
+              disabled={checkoutLoading === "starter"}
+              className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 rounded-lg text-xs transition font-mono disabled:opacity-50"
             >
-              {checkoutLoading === process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER ? "Loading..." : "Start Free Trial"}
+              {checkoutLoading === "starter" ? "Loading..." : "Start Free Trial"}
             </button>
           </div>
 
@@ -474,7 +481,6 @@ export default function Home() {
                 <span className="text-slate-400 text-xs">/mo</span>
               </div>
 
-              {/* Plan Features */}
               <ul className="text-xs text-slate-200 space-y-3 mb-8 border-t border-slate-800 pt-5">
                 <li className="flex items-center gap-2">✓ Up to 5 Business Locations</li>
                 <li className="flex items-center gap-2">✓ Unlimited AI Responses</li>
@@ -484,11 +490,11 @@ export default function Home() {
               </ul>
             </div>
             <button
-              onClick={() => handleCheckout(process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO)}
-              disabled={checkoutLoading === process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO}
-              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-lg text-xs transition font-mono"
+              onClick={() => handleCheckout(STRIPE_PRICES.pro, "pro")}
+              disabled={checkoutLoading === "pro"}
+              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-lg text-xs transition font-mono disabled:opacity-50"
             >
-              {checkoutLoading === process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO ? "Loading..." : "Start Free Trial"}
+              {checkoutLoading === "pro" ? "Loading..." : "Start Free Trial"}
             </button>
           </div>
 
@@ -502,7 +508,6 @@ export default function Home() {
                 <span className="text-slate-400 text-xs">/mo</span>
               </div>
 
-              {/* Plan Features */}
               <ul className="text-xs text-slate-300 space-y-3 mb-8 border-t border-slate-800 pt-5">
                 <li className="flex items-center gap-2">✓ Unlimited Business Locations</li>
                 <li className="flex items-center gap-2">✓ Unlimited AI Responses</li>
@@ -512,11 +517,11 @@ export default function Home() {
               </ul>
             </div>
             <button
-              onClick={() => handleCheckout(process.env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY)}
-              disabled={checkoutLoading === process.env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY}
-              className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 rounded-lg text-xs transition font-mono"
+              onClick={() => handleCheckout(STRIPE_PRICES.agency, "agency")}
+              disabled={checkoutLoading === "agency"}
+              className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 rounded-lg text-xs transition font-mono disabled:opacity-50"
             >
-              {checkoutLoading === process.env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY ? "Loading..." : "Contact Sales"}
+              {checkoutLoading === "agency" ? "Loading..." : "Contact Sales"}
             </button>
           </div>
         </div>

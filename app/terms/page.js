@@ -1,44 +1,39 @@
-import Link from 'next/link';
+"use client";
 
-export default function TermsPage() {
+import { ArrowLeft } from "lucide-react";
+
+export default function TermsOfService() {
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col justify-between">
-      <div className="max-w-4xl mx-auto px-6 py-16 w-full">
-        <Link 
-          href="/" 
-          className="inline-flex items-center text-sm text-indigo-400 hover:text-indigo-300 mb-8 transition-colors"
-        >
-          ← Back to Home
-        </Link>
+    <div className="min-h-screen bg-[#030712] text-slate-300 font-sans p-8 md:p-20">
+      <div className="max-w-3xl mx-auto">
+        <button onClick={() => window.location.href='/'} className="flex items-center gap-2 text-blue-500 font-bold mb-10 hover:text-blue-400 transition">
+          <ArrowLeft size={18} /> Back to Home
+        </button>
         
-        <h1 className="text-4xl font-extrabold tracking-tight mb-8 text-white border-b border-gray-800 pb-4">
-          Terms of Service
-        </h1>
-        
-        <div className="space-y-6 text-gray-300 leading-relaxed text-base">
-          <p>
-            By accessing or using ReviewPulse AI, you agree to be bound by these Terms of Service.
-          </p>
-          
-          <section className="bg-gray-900/50 p-6 rounded-xl border border-gray-800">
-            <h2 className="text-xl font-semibold mb-3 text-indigo-400">1. Use of Service</h2>
-            <p>
-              You must use ReviewPulse AI in compliance with all applicable local, state, national, and international laws and regulations.
+        <h1 className="text-4xl font-black text-white mb-4">Terms & Refund Policy</h1>
+        <p className="text-sm text-slate-500 mb-10 uppercase tracking-widest">Last Updated: August 2026</p>
+
+        <div className="space-y-8 leading-relaxed">
+          <section>
+            <h2 className="text-xl font-bold text-white mb-3">1. Subscription Plans</h2>
+            <p>ReviewPulse AI operates on a subscription basis. By subscribing, you authorize us to charge your payment method monthly. You may cancel at any time via your dashboard.</p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-bold text-white mb-3">2. No-Refund Policy</h2>
+            <p className="bg-blue-600/10 border-l-4 border-blue-500 p-4 text-white">
+              All sales are final. Since our AI tool provides immediate value through credits and instant generation, we do not offer refunds once a payment is processed. You are encouraged to use our 7-day free trial before committing to a paid plan.
             </p>
           </section>
 
-          <section className="bg-gray-900/50 p-6 rounded-xl border border-gray-800">
-            <h2 className="text-xl font-semibold mb-3 text-indigo-400">2. Accounts & Security</h2>
-            <p>
-              You are responsible for maintaining the security and confidentiality of your account credentials at all times.
-            </p>
+          <section>
+            <h2 className="text-xl font-bold text-white mb-3">3. Responsible AI Use</h2>
+            <p>Users are responsible for the final content posted to public platforms. While our AI is 99% accurate, we recommend reviewing responses for high-stakes customer interactions.</p>
           </section>
 
-          <section className="bg-gray-900/50 p-6 rounded-xl border border-gray-800">
-            <h2 className="text-xl font-semibold mb-3 text-indigo-400">3. Subscriptions & Billing</h2>
-            <p>
-              Fees for paid services are billed in advance on a recurring monthly or annual basis. You can cancel your subscription at any time.
-            </p>
+          <section>
+            <h2 className="text-xl font-bold text-white mb-3">4. Plan Upgrades</h2>
+            <p>Upgrades are processed instantly, and any remaining credit from your current plan will be prorated by Stripe.</p>
           </section>
         </div>
       </div>

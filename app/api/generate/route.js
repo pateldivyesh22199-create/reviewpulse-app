@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -8,132 +7,69 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
 export async function POST(req) {
   try {
-    // 1. Safe Auth Check (Demo mode support if not logged in)
     const { userId } = await auth();
-
     const body = await req.json();
-    const { reviewText, rating = 5, reviewerName, businessType, tone } = body;
+    const { reviewText, rating, reviewerName } = body;
+    const apiKey = process.env.GEMINI_API_KEY;
 
-    // 2. Strict Input Validation
-    if (!reviewText || String(reviewText).trim() === "") {
-      return NextResponse.json(
-        { error: "Review text is required." },
-        { status: 400 }
-      );
+    // ૧. યુઝરનો પ્લાન અને ક્રેડિટ્સ ચેક કરવા
+    const { data: userRecord } = await supabase
+      .from("users")
+      .select("credits_used, plan")
+      .eq("user_id", userId)
+      .single();
+
+    const currentCredits = userRecord?.credits_used || 0;
+    const userPlan = userRecord?.plan || "free";
+
+    // લિમિટ સેટિંગ (ટેસ્ટિંગ માટે ૧૦ રિવ્યુ રાખ્યા છે, પછી આપણે વધારી શકીએ)
+    const limit = (userPlan === "pro" || userPlan === "agency") ? 999999 : 10;
+
+    if (currentCredits >= limit) {
+      return NextResponse.json({ 
+        error: "Credit limit reached. Please upgrade your plan for unlimited access." 
+      }, { status: 403 });
     }
 
-    let user = null;
-    let currentCredits = 0;
-
-    // 3. User Credits Check (Only if user is logged in)
-    if (userId) {
-      const { data: userData } = await supabase
-        .from("users")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
-
-      user = userData;
-
-      if (!user) {
-        const { data: newUser } = await supabase
-          .from("users")
-          .insert({ user_id: userId, email: "user@example.com", credits_used: 0 })
-          .select()
-          .single();
-        user = newUser;
-      }
-
-      currentCredits = user?.credits_used || 0;
-      const creditLimit = user?.plan === "pro" || user?.plan === "agency" ? 999999 : 200;
-
-      if (currentCredits >= creditLimit) {
-        return NextResponse.json(
-          { error: "Credit limit reached. Please upgrade your plan." },
-          { status: 403 }
-        );
-      }
-    }
-
-    // 4. Business Context Fetching
-    let business = null;
-    if (userId) {
-      const { data: bData } = await supabase
-        .from("businesses")
-        .select("*")
-        .eq("user_id", userId)
-        .maybeSingle();
-      business = bData;
-    }
-
-    const businessName = business?.name || "Our Business";
-    const category = business?.category || businessType || "General Service";
-    const description = business?.description || "";
-    const phone = business?.phone || "";
-    const aiTone = business?.ai_tone || tone || "Professional & Formal";
-    const customInstructions = business?.custom_instructions || "";
-
-    // 5. Build AI Prompt
+    // ૨. બિઝનેસ સેટિંગ્સ લેવા
+    const { data: business } = await supabase.from("businesses").select("*").eq("user_id", userId).single();
+    
     const prompt = `
-You are an expert customer service representative for "${businessName}" (Category: ${category}).
-Business Details: ${description}
-Support Phone: ${phone}
+      You are an AI assistant for "${business?.name || "Our Business"}".
+      Context: ${business?.description || ""}
+      Tone: ${business?.ai_tone || "Professional"}
+      Customer: ${reviewerName || "Guest"} (${rating} stars)
+      Review: "${reviewText}"
+      Instructions: ${business?.custom_instructions || ""}
+      If 1-2 stars, ask them to call ${business?.phone || "us"}.
+    `;
 
-Your task is to write a helpful, personalized response to a customer review.
-
-Review Details:
-- Customer Name: ${reviewerName || "Valued Customer"}
-- Rating: ${rating} out of 5 Stars
-- Customer Review: "${reviewText}"
-
-Tone & Persona Instructions:
-- Adopt a tone that is: ${aiTone}.
-- Custom Instructions: ${customInstructions}
-- If the review is negative (1-3 stars), offer sincere assistance and suggest contacting us at ${phone || "our support desk"}.
-- If positive (4-5 stars), express gratitude warmly.
-- Keep the reply concise, professional, and human-like (under 120 words). Do not use placeholders.
-`;
-
-    // 6. Gemini AI Call
-    const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
-    const result = await model.generateContent(prompt);
-    const aiResponseText = result.response.text();
-
-    // 7. Update Credits & History (Only for Logged-In Users)
-    let updatedCredits = currentCredits;
-    if (userId) {
-      updatedCredits = currentCredits + 1;
-      await supabase
-        .from("users")
-        .update({ credits_used: updatedCredits })
-        .eq("user_id", userId);
-
-      if (business) {
-        await supabase.from("reviews").insert({
-          business_id: business.id,
-          user_id: userId,
-          reviewer_name: reviewerName || "Anonymous",
-          rating: Number(rating),
-          review_text: reviewText,
-          ai_response_text: aiResponseText,
-        });
-      }
-    }
-
-    return NextResponse.json({
-      success: true,
-      aiResponse: aiResponseText,
-      creditsUsed: updatedCredits,
+    // ૩. AI Call
+    const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: [{ role: "user", content: prompt }],
+        model: "qwen/qwen3.8-27b",
+      })
     });
+
+    const data = await aiRes.json();
+    const aiResponseText = data.choices[0].message.content;
+
+    // ૪. સેવ અને ક્રેડિટ અપડેટ
+    await supabase.from("reviews").insert({
+      user_id: userId, business_id: business?.id, reviewer_name: reviewerName || "Anonymous",
+      rating, review_text: reviewText, ai_response_text: aiResponseText
+    });
+
+    await supabase.from("users").update({ credits_used: currentCredits + 1 }).eq("user_id", userId);
+
+    return NextResponse.json({ success: true, response: aiResponseText });
+
   } catch (error) {
-    console.error("AI Generation Error:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to generate reply." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

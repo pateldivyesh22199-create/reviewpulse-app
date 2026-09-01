@@ -1,12 +1,18 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-// જે પેજ પ્રોટેક્ટેડ રાખવા હોય તેના રૂટ્સ
+// માત્ર આ જ રૂટ્સ પ્રોટેક્ટેડ રહેશે
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
   "/settings(.*)",
+  "/admin(.*)"
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
+  // જો રિક્વેસ્ટ ક્રોન જોબની હોય તો તેને ચેક ના કરો
+  if (req.nextUrl.pathname.startsWith('/api/cron')) {
+    return;
+  }
+
   if (isProtectedRoute(req)) {
     const authObject = await auth();
     authObject.protect();
@@ -15,9 +21,7 @@ export default clerkMiddleware(async (auth, req) => {
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Always run for API routes
     "/(api|trpc)(.*)",
   ],
 };

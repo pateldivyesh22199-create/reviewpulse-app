@@ -7,31 +7,27 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// ૧. બિઝનેસ અને યુઝરનો પ્લાન મેળવવો
+// ૧. યુઝરના તમામ બિઝનેસ લોકેશન મેળવવા
 export async function GET() {
   try {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // આપણે હવે 'users' ટેબલમાંથી સાચો પ્લાન અને ક્રેડિટ્સ લાવીશું
-    const { data: userData } = await supabase
-      .from("users")
-      .select("plan, credits_used")
-      .eq("user_id", userId)
-      .single();
+    // યુઝરના પ્લાન અને ક્રેડિટ્સની વિગત લાવો
+    const { data: userData } = await supabase.from("users").select("*").eq("user_id", userId).single();
 
-    // બિઝનેસની વિગતો લાવવી
-    const { data: bizData } = await supabase
+    // યુઝરના બધા જ બિઝનેસ લાવો
+    const { data: bizData, error } = await supabase
       .from("businesses")
       .select("*")
       .eq("user_id", userId)
-      .single();
+      .order('created_at', { ascending: true });
 
-    // બંને ડેટાને ભેગા કરીને મોકલવા
     return NextResponse.json({
-      ...bizData,
+      businesses: bizData || [],
       plan: userData?.plan || "free",
-      credits_used: userData?.credits_used || 0
+      credits_used: userData?.credits_used || 0,
+      max_locations: userData?.max_locations || 1
     });
 
   } catch (err) {
@@ -39,19 +35,30 @@ export async function GET() {
   }
 }
 
-// ૨. સેવ કરવાની લોજિક (જૂની હતી એમ જ રહેશે, બસ થોડી સુરક્ષિત કરી છે)
+// ૨. નવો બિઝનેસ ઉમેરવો અથવા જૂનો સુધારવો
 export async function POST(req) {
   try {
     const { userId } = await auth();
-    const clerkUser = await currentUser();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { name, category, description, phone, tone, customInstructions, google_link, owner_email, email_alerts, whatsapp_alerts } = body;
+    const { id, name, category, description, phone, tone, customInstructions, google_link, owner_email, email_alerts, whatsapp_alerts } = body;
 
+    // જો નવો બિઝનેસ (id વગરનો) ઉમેરતા હોય, તો લિમિટ ચેક કરવી
+    if (!id) {
+      const { data: user } = await supabase.from("users").select("max_locations").eq("user_id", userId).single();
+      const { count } = await supabase.from("businesses").select('*', { count: 'exact', head: true }).eq("user_id", userId);
+
+      if (count >= (user?.max_locations || 1)) {
+        return NextResponse.json({ error: "Location limit reached. Please upgrade your plan." }, { status: 403 });
+      }
+    }
+
+    // ડેટા સેવ કરવો (જો ID હોય તો Update, ના હોય તો Insert)
     const { data, error } = await supabase
       .from("businesses")
       .upsert({
+        id: id || undefined, // જો ID હોય તો એ જ રો અપડેટ થશે
         user_id: userId,
         name, category, description, phone,
         ai_tone: tone,
@@ -61,11 +68,12 @@ export async function POST(req) {
         email_alerts,
         whatsapp_alerts,
         updated_at: new Date(),
-      }, { onConflict: "user_id" })
+      })
       .select();
 
     if (error) throw error;
     return NextResponse.json(data[0]);
+
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
